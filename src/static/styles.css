@@ -24,6 +24,52 @@ header {
   border-radius: 5px;
 }
 
+.teacher-access {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+#teacher-login-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 10px;
+  flex-basis: 100%;
+  max-width: 680px;
+  margin: 0 auto;
+}
+
+#teacher-login-form .form-group {
+  margin: 0;
+  text-align: left;
+}
+
+#teacher-login-form label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+}
+
+#teacher-login-form input {
+  width: 100%;
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 16px;
+}
+
+#teacher-message {
+  flex-basis: 100%;
+  margin: 0;
+  padding: 8px;
+  border-radius: 4px;
+}
+
 header h1 {
   margin-bottom: 10px;
 }
@@ -189,7 +235,18 @@ button:hover {
 }
 
 .hidden {
-  display: none;
+  display: none !important;
+}
+
+@media (max-width: 600px) {
+  #teacher-login-form {
+    grid-template-columns: minmax(0, 1fr);
+    width: 100%;
+  }
+
+  #teacher-login-form button {
+    width: 100%;
+  }
 }
 
 footer {
