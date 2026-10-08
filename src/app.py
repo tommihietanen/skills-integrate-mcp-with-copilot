@@ -5,14 +5,43 @@ A super simple FastAPI application that allows students to view and sign up
 for extracurricular activities at Mergington High School.
 """
 
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import RedirectResponse
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
 import os
+import secrets
 from pathlib import Path
 
 app = FastAPI(title="Mergington High School API",
               description="API for viewing and signing up for extracurricular activities")
+teacher_auth = HTTPBasic(auto_error=False)
+
+
+def require_teacher(credentials: HTTPBasicCredentials | None = Depends(teacher_auth)):
+    expected_username = os.environ.get("TEACHER_USERNAME")
+    expected_password = os.environ.get("TEACHER_PASSWORD")
+
+    if not expected_username or not expected_password:
+        raise HTTPException(status_code=503, detail="Teacher access is not configured")
+
+    if credentials is None:
+        raise HTTPException(
+            status_code=401,
+            detail="Teacher login required",
+            headers={"WWW-Authenticate": "Basic"},
+        )
+
+    username_matches = secrets.compare_digest(credentials.username, expected_username)
+    password_matches = secrets.compare_digest(credentials.password, expected_password)
+    if not username_matches or not password_matches:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid teacher credentials",
+            headers={"WWW-Authenticate": "Basic"},
+        )
+
+    return credentials.username
 
 # Mount the static files directory
 current_dir = Path(__file__).parent
@@ -88,7 +117,12 @@ def get_activities():
     return activities
 
 
-@app.post("/activities/{activity_name}/signup")
+@app.get("/teacher/session")
+def get_teacher_session(teacher: str = Depends(require_teacher)):
+    return {"username": teacher}
+
+
+@app.post("/activities/{activity_name}/signup", dependencies=[Depends(require_teacher)])
 def signup_for_activity(activity_name: str, email: str):
     """Sign up a student for an activity"""
     # Validate activity exists
@@ -110,7 +144,7 @@ def signup_for_activity(activity_name: str, email: str):
     return {"message": f"Signed up {email} for {activity_name}"}
 
 
-@app.delete("/activities/{activity_name}/unregister")
+@app.delete("/activities/{activity_name}/unregister", dependencies=[Depends(require_teacher)])
 def unregister_from_activity(activity_name: str, email: str):
     """Unregister a student from an activity"""
     # Validate activity exists
